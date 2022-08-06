@@ -1,6 +1,8 @@
 import * as React from 'react';
 //import {getProducts } from '../api/product';
+import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
+//import Collapse from '@mui/material/Collapse';
 import Grid from '@mui/material/Grid';
 import iphone3 from '../assets/images/iphone3.jpg';
 import iphonex2 from '../assets/images/iphonex2.jpg';
@@ -26,6 +28,8 @@ import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import Tooltip from '@mui/material/Tooltip';
 import LinearProgress from '@mui/material/LinearProgress';
+import Skeleton from '@mui/material/Skeleton'
+import axios from 'axios';
 
 //import SwipeableViews from 'react-swipeable-views';
 //import {AutoPlay} from 'react-swipeable-views-utils';
@@ -41,36 +45,69 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import 'swiper/css/scrollbar';
 
-interface Product {
-    name: string
-    amount: string
-    rating: Number
-    photos: Array<string>
-    model: string
-    brand: string
-    manufacturer: string
-    variants: Array<Object>
-    description: string
-    discount: string
-    specifications: Array<Object>
-    shipping: Array<Object>
-    about: string
+export type TypeCategory = 'Accessories' | 'Clothing' | 'Food' | 'Misc'
+export type TypeSubCategory = | 'Kids' | 'Adult' | 'Male' | 'Female'| 'Mobile' | 'Desktop' | 'Laptop' | 'Variety'
+interface Category {
+  category: TypeCategory;
+  subcategory: TypeSubCategory;
 }
-const product: Product = {
+export interface Shipping {
+  cost: number;
+  location: string;
+  time: string;
+}
+export interface Product {
+    name: string;
+    amount: string;
+    rating: number;
+    category : Category;
+    photos: Array<string>;
+    model: string;
+    brand: string;
+    manufacturer: string;
+    tags : string[];
+    availability:boolean;
+    delivery:boolean;
+    locations:string[];
+    product_id: string;
+    variants: Array<Object>;
+    description: string;
+    shipping: Shipping[];
+    specifications: object[];
+    about: string;
+    discount: string;
+    release: Date;
+    expire: Date;
+    updatedAt: Date;
+    addedDate: Date;
+}
+
+const sampleProduct: Product = {
   name: 'iPhone X Silver',
   amount: 'ZMW 999.50',
   rating: 3,
-  photos: [iphonex,iphone3,iphonex2],
+  photos: [iphonex,iphonex2],
   model: 'X series',
   brand: 'iPhone',
   manufacturer: 'Apple Company',
   variants: [{}],
+  product_id: '',
   description: 'Data Typed',
   discount: 'K200',
+  availability: true,
+  delivery:true,
   specifications: [{'NETWORK':'GSM/HSPA'},{'LAUNCH':'September 2017'},{'DISPLAY':'TYPE=[Super Retina OLED, HDR10, Dolby Vision, 625 nits (HBM)]\nSIZE=(5.8 inches, 84.4 cm2 ~82.9% screen-to-body ratio),\n RESOLUTION=[1125 x 2436 pixels, 19.5:9 ratio (~458 ppi density)] \b \n PROTECTION=[Scratch-resistant glass, oleophobic coating ,Wide color gamut,3D Touch,True-tone]'},{'PLATFORM':'OS=[iOS 11.1.1, up to iOS 15.5, planned upgrade to iOS 16],CHIPSET=[Apple A11 Bionic (10 nm)] CPU=[Hexa-core 2.39 GHz (2x Monsoon + 4x Mistral)] GPU=[Apple GPU (three-core graphics)] '}],
-  shipping: [{'location':'Lusaka','time':'1 hour','cost':0}],
-  about: 'explicari nisl viderer ullamcorper hac ut purus aenean. libris aeque sumo autem usu pulvinar nascetur numquam nobis ludus noster nam postea sententiae. '
+  shipping: [{location:'Lusaka',time:'1hour',cost:0}],
+  about: 'explicari nisl viderer ullamcorper hac ut purus aenean. libris aeque sumo autem usu pulvinar nascetur numquam nobis ludus noster nam postea sententiae. ',
+  locations:['Lusaka','Southern Province'],
+  release: new Date(),
+  expire: new Date(),
+  addedDate: new Date(),
+  updatedAt: new Date(),
+  tags: ['iphone','mobile'],
+  category:{category:'Accessories', subcategory:'Mobile'}
 }
+
 interface Review {
   username: string
   fullname: string
@@ -79,7 +116,12 @@ interface Review {
   rating: number
   date: string
 }
-
+interface responseType {
+  status: boolean;
+  message: string;
+  product: Product;
+}
+type reponseProduct = Product | {status:boolean}
 const review: Review = {
   username: 'martintembo1',
   fullname: 'Martin Tembo',
@@ -111,15 +153,113 @@ const myReviewTheme = createTheme({
     }
   }
 });
+function Loading() {
+  
+  return (
+    <Box sx={{width:'100%'}}>
+      <Grid container spacing={2} >
+       
+       
+        <Grid item xs={12} sm={6}  sx={{overflow:'scroll',maxHeight:{sm:400},mt:{sm:10}}} >
+        <Skeleton variant='rectangular' animation='wave' height='250px' width='80%' sx={{borderRadius:'5px',margin:'0px auto'}}>
+        </Skeleton>
+        <Box sx={{display:{xs:'none',sm:'flex',margin:'10px auto',width:'60%'}}}>
+        <Skeleton variant='rectangular' animation='wave' height='100px' width='100px' sx={{borderRadius:'5px'}}>
+        </Skeleton>
+         <Skeleton variant='rectangular' animation='wave' height='100px' width='100px' sx={{borderRadius:'5px',margin:'10px 20px'}}>
+        </Skeleton>
+         <Skeleton variant='rectangular' animation='wave' height='100px' width='100px' sx={{borderRadius:'5px'}}>
+        </Skeleton>
+        </Box>
+        </Grid>
+        <Grid item xs={12} sm={6}  sx={{overflow:'scroll',maxHeight:{sm:400},mt:{sm:10}}}>
+        <Skeleton variant='rectangular' width='150px' sx={{my:1,borderRadius:'5px'}} height='10px' animation='wave' >
+        </Skeleton>
+        <Skeleton variant='rectangular' animation='wave' sx={{borderRadius:'5px'}} width='70px' height='10px' >
+        </Skeleton>
+        
+        <Skeleton variant='rectangular' animation='wave' sx={{borderRadius:'5px',my:1}} height='10px' width='100px' >
+        </Skeleton>
+        <Skeleton variant='rectangular' animation='wave' sx={{borderRadius:'5px',my:1,mx:'auto'}} height='30px' width='100%' >
+        </Skeleton>
+        
+           <Skeleton variant='rectangular' animation='wave' height='100px' width='80%' sx={{borderRadius:'5px',margin:'0px auto'}}>
+        </Skeleton>
+        </Grid>
+        <Grid item xs={12} sm={6}  sx={{overflow:'scroll',maxHeight:{sm:400},mt:{sm:10}}} >
+        <Box sx={{display:'flex'}}>
+           <Skeleton variant='circular' animation='wave' height='50px' width='50px' sx={{borderRadius:'50%',ml:6,my:1}}>
+           </Skeleton>
+           <Box sx={{display:'flex',flexDirection:'column',ml:1}}>
+           <Skeleton variant='rectangular' animation='wave' height='10px' width='100px' sx={{mt:'20px'}}>
+           </Skeleton>
+           <Skeleton variant='rectangular' animation='wave' height='10px' width='70px' sx={{my:1}}>
+           </Skeleton>
+           </Box>
+        </Box>
+           <Skeleton variant='rectangular' animation='wave' height='100px' width='80%' sx={{borderRadius:'5px',margin:'0px auto'}}>
+        </Skeleton>
+         <Box sx={{display:'flex'}}>
+           <Skeleton variant='circular' animation='wave' height='50px' width='50px' sx={{borderRadius:'50%',ml:6,my:1}}>
+           </Skeleton>
+           <Box sx={{display:'flex',flexDirection:'column',ml:1}}>
+           <Skeleton variant='rectangular' animation='wave' height='10px' width='100px' sx={{mt:'20px'}}>
+           </Skeleton>
+           <Skeleton variant='rectangular' animation='wave' height='10px' width='70px' sx={{my:1}}>
+           </Skeleton>
+           </Box>
+        </Box>
+           <Skeleton variant='rectangular' animation='wave' height='100px' width='80%' sx={{borderRadius:'5px',margin:'0px auto'}}>
+        </Skeleton>
+        </Grid>
+        <Grid  item xs={12} sm={6}>
+            <Box sx={{width:'100%'}}>
+      <Grid container spacing={2} >
+        {[1,2,3].map((n,i)=> (
+        <Grid item xs={6} sm={3}  sx={{overflow:'scroll',maxHeight:{sm:400},mt:{sm:10}}} >
+        <Skeleton variant='rectangular' animation='wave' height='150px' width='150px' sx={{borderRadius:'5px'}}>
+        </Skeleton>
+        <Skeleton variant='rectangular' width='150px' sx={{my:1,borderRadius:'5px'}} height='10px' animation='wave' >
+        </Skeleton>
+        <Skeleton variant='rectangular' animation='wave' sx={{borderRadius:'5px'}} width='70px' height='10px' >
+        </Skeleton>
+        <Box sx={{display:'flex',justifyContent:'space-between'}}>
+        <Skeleton variant='rectangular' animation='wave' sx={{borderRadius:'5px',my:1}} height='10px' width='100px' >
+        </Skeleton>
+        <Skeleton variant='rectangular' animation='wave' sx={{borderRadius:'5px',my:1}} height='10px' width='40px' >
+        </Skeleton>
+        </Box>
+        </Grid>
+        ))}
+      </Grid>
+    </Box>
+        </Grid >
+      </Grid>
+    </Box>
+    );
+}
+
+const theme2 = createTheme({
+  palette:{
+    primary:{
+      main:Colors.yellow[800],
+    }
+  }
+});
 export default function Products() {
   const dispatch = useCustomDispatch();
+  const [loading,setLoading] = React.useState(true);
   const [cartNumber,setCartNumber] = React.useState(0);
   const [currentImage,setImage] = React.useState(0);
   const [open,setOpen] = React.useState(false);
+  const [product,setProduct] = React.useState<Product>(sampleProduct);
   const [initialButton,setInitialButton] = React.useState('');
   const [secondButton,setSecondButton] = React.useState('none');
   const [relatedProducts,setRelatedProducts] = React.useState([product,product,product,product,product]);
   const [loaderState,setLoader] = React.useState('none');
+  const [responseMessage,setResponseMessage] = React.useState<string>('Network Error, Try Again');
+  const [networkState,setNetworkState] = React.useState<boolean>(false);
+  const [refresh,setRefresh] = React.useState<boolean>(false);
   const swiper = useSwiper();
   const addToCart = (n : number) => {
     setCartNumber(cartNumber + n);
@@ -164,9 +304,40 @@ export default function Products() {
     //setRelatedProducts(relatedProducts);
     setLoader('block');
   }
+  const refreshProduct = () => {
+    refresh? setRefresh(false): setRefresh(true);
+  }
+  React.useEffect(()=>{
+    let product_id =  window.location.search.split('=')[1];
+    axios.get<responseType>('/api/product',{params:{product_id:product_id}})
+    .then( product => {
+      //alert(JSON.stringify(product));
+      if(product.data.status){
+        setProduct(product.data.product);
+        setLoading(false);
+        setNetworkState(false);
+      } else {
+        setResponseMessage(product.data.message);
+        setNetworkState(true);
+      }
+    })
+    .catch(err => {
+       setResponseMessage('Could\'nt connect to the server.');
+       setNetworkState(true);
+    });
+    
+  },[refresh]);
   return (
     <React.Fragment>
+    
     <Box sx={{color:'#000',mb:10}}>
+    <ThemeProvider theme={theme2} >
+      <Collapse in={networkState} >
+            <Alert color='error' icon={<i className='fal fa-globe' />} >{responseMessage} <Button sx={{textTransform:'none',textDecoration:'underline'}} onClick={refreshProduct}><i className='fal fa-sync' />  Retry</Button></Alert> 
+            
+    </Collapse>
+    </ThemeProvider>
+    {loading? <Loading /> :
     <Grid container spacing={2} >
       <Grid item xs={12} sm={6} >
       <Box>
@@ -423,7 +594,7 @@ export default function Products() {
         </Grid>
       </Grid>
     </Grid>
-    
+    }
     </Box>
     </React.Fragment>
     )

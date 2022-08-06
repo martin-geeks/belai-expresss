@@ -2,6 +2,7 @@ import * as React from 'react';
 import Grid from '@mui/material/Grid';
 import MuiGrid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
+
 import MuiButton from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import Tabs from '@mui/material/Tabs';
@@ -15,6 +16,8 @@ import {
   ThemeProvider,
   createTheme
 } from '@mui/material/styles';
+import Alert from '@mui/material/Alert';
+import Collapse from '@mui/material/Collapse';
 import CardMedia from '@mui/material/CardMedia';
 import IconButton from '@mui/material/IconButton';
 import SwappleIphoneXSilver from '../assets/images/swappie-iphone-x-silver.png';
@@ -23,7 +26,7 @@ import image2 from '../assets/images/clothing/image2.jpg';
 import image3 from '../assets/images/clothing/image3.jpg';
 import { useCustomDispatch } from '../states/hook';
 import {add,remove} from '../states/cartItems';
-import  {Link} from 'react-router-dom';
+import  {Link, Navigate} from 'react-router-dom';
 import axios from 'axios';
 
 
@@ -89,82 +92,39 @@ interface Category {
   category: TypeCategory;
   subcategory: TypeSubCategory;
 }
-
+interface Shipping {
+  cost: number;
+  location: string;
+  time: string;
+}
 
 interface Product {
     name: string;
     amount: string;
     rating: number;
-    photo: string;
+    category : Category;
+    photos: Array<string>;
     model: string;
     brand: string;
-    tags:Array<string>;
-    category: Category;
     manufacturer: string;
+    tags : string[];
+    availability:boolean;
+    delivery:boolean;
+    locations:string[];
+    product_id: string;
     variants: Array<Object>;
-    description: string
+    description: string;
+    shipping: Shipping[];
+    specifications: object[];
+    about: string;
     discount: string;
     release: Date;
     expire: Date;
+    updatedAt: Date;
     addedDate: Date;
 }
-const product: Product = {
-  name: 'iPhone X Silver',
-  amount: 'ZMW 999.50',
-  rating: 3,
-  photo: SwappleIphoneXSilver,
-  model: 'X series',
-  brand: 'iPhone',
-  manufacturer: 'Apple Company',
-  variants: [{}],
-  description: 'Data Typed',
-  discount: 'K200',
-  release: new Date(),
-  expire: new Date(),
-  addedDate: new Date(),
-  tags: ['iphone','mobile'],
-  category:{category:'Accessories',subcategory:'Mobile'}
-}
-var products = new Array();
-for(let i=1; i<=10; i++){
-  products.push(product);
-}
-/*//products[3] = {
-  name: 'Spac Zed Grey',
-  amount: 'ZMW 500',
-  rating: 2,
-  photo:image,
-  model: 'Leather 4 CAT',
-  brand: 'Batter',
-  manufacturer: 'Batter Shoe Company',
-  variants: [{}],
-  description: 'Data Type',
-  discount: 'K105'
-}
-//products[2] = {
-  name: 'Yonik ',
-  amount: 'ZMW 150',
-  rating: 3,
-  photo:image2,
-  model: 'Lik 4 CAT',
-  brand: 'Batter',
-  manufacturer: 'Batter Shoe Company',
-  variants: [{}],
-  description: 'Data Type',
-  discount: 'K75'
-}
-//products[7] = {
-  name: 'Sapra Unik ',
-  amount: 'ZMW 78.00',
-  rating: 3,
-  photo:image3,
-  model: 'Lik 4 CAT',
-  brand: 'Batter',
-  manufacturer: 'Batter Shoe Company',
-  variants: [{}],
-  description: 'Data Type',
-  discount: 'K5'
-}*/
+
+
 const GridProduct = styled(MuiGrid)(({theme}) =>({
   border:`0.5px solid ${Colors.grey[300]}`,
   boxShadow:'1px 1px 1px rgba(0,0,0,0.1)',
@@ -198,13 +158,22 @@ function Loading() {
     </Box>
     );
 }
-
+const theme2 = createTheme({
+  palette:{
+    primary:{
+      main:Colors.yellow[800],
+    }
+  }
+});
 function Home() {
   const dispatch = useCustomDispatch();
   const [value,
     setValue] = React.useState(0);
   const [products, setProducts]= React.useState<Product[]>([]);
-  const [loading,setLoading] = React.useState(true);
+  const [loading,setLoading] = React.useState<boolean>(true);
+  const [errorState,setError] = React.useState <boolean>(false);
+  const [navigate,setNavigate] =  React.useState(false);
+  const [currentId,setCurrentId] = React.useState<string>('');
   const handleChange = (event: React.SyntheticEvent, newValue: number) => {
     setValue(newValue);
   };
@@ -220,7 +189,12 @@ function Home() {
     
     return <Box sx={{display:'flex'}}>{stars}</Box>
   }
-    React.useEffect(()=>{
+  const [responseMessage,setResponseMessage] = React.useState<string>('Network Error, Try Again');
+  const [refresh,setRefresh] = React.useState<boolean>(false);
+   const refreshProduct = () => {
+    refresh? setRefresh(false): setRefresh(true);
+  }
+  React.useEffect(()=>{
       let data = new FormData();
       data.set('ux-key','jshsbshzkzjs')
       /*axios.get('/products')
@@ -234,15 +208,27 @@ function Home() {
       .then(response => {
         setLoading(false);
         setProducts(response.data);
+        setError(false);
       })
       .catch(err => {
         setLoading(true);
-        alert(err)
+        setError(true);
+        setResponseMessage('Could\'nt connect to the server.');
+       
       })
-    },[]);
+    },[refresh]);
+  const selectProduct = (product_id: string) => {
+    setNavigate(true);
+    setCurrentId(product_id);
+    /*setTimeout(function (){
+      setNavigate(false);
+    },100);*/
+  }
   return (
     <React.Fragment>
+    
       <Grid container spacing={4} sx={{position:'static'}}>
+      
         <Grid item xs={12} sm={3}>
         <ThemeProvider theme={TabsTheme}>
        
@@ -284,9 +270,19 @@ function Home() {
         </Box>
         </ThemeProvider>
         </Grid>
+        <Grid item xs={12} sm={12}>
+      
+        <ThemeProvider theme={theme2} >
+      <Collapse in={errorState} >
+            <Alert color='error' icon={<i className='fal fa-globe' />} >{responseMessage} <Button sx={{textTransform:'none',textDecoration:'underline'}} onClick={refreshProduct}><i className='fal fa-sync' />  Retry</Button></Alert> 
+            
+    </Collapse>
+    </ThemeProvider>
+      </Grid>
          <Grid item xs={12} sm={9} sx={{overflow:'scroll',maxHeight:{sm:400},mt:{sm:10}}} >
            <ThemeProvider theme={TabsTheme} >
            <Box>
+            {navigate? <Navigate  to={'/product?product_id='+currentId} state={{product_id:currentId}} />: ''}
             {loading? <Loading />: 
             <Grid container spacing={2}>
               {products.map((item,i)=>(
@@ -300,9 +296,9 @@ function Home() {
                     
                   </IconButton>
                   </Box>
-                  <CardMedia component='img' src={item.photo} alt='Photo of an iPhone X'      width={'150px'}    height={'150px'}/>
+                  <CardMedia component='img' src={item.photos[0]} alt='Photo of an iPhone X'      width={'150px'}    height={'150px'}/>
                   <Typography variant='body1'>
-                   <Typography sx={{color:Colors.blue[800],fontWeight:'bold',textAlign:'left' ,textTransform:'none'}}  component={Link} to='/product'>
+                   <Typography sx={{color:Colors.blue[800],fontWeight:'bold',textAlign:'left' ,textTransform:'none'}}  onClick={()=> selectProduct(item.product_id)}>
                     {item.name}
                   </Typography>
                   {handleRating(item.rating)}
@@ -386,7 +382,7 @@ function Home() {
                     
                   </IconButton>
                   </Box>
-                  <CardMedia component='img' src={item.photo} alt='Photo of an iPhone X'  height={150}/>
+                  <CardMedia component='img' src={item.photos[0]} alt='Photo of an iPhone X'  height={150}/>
                   <Typography variant='body1'>
                    <Typography sx={{color:Colors.blue[800],fontWeight:'bold',textAlign:'left'}} component={Link} to='/product'>
                     {item.name}
