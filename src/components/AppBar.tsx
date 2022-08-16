@@ -6,7 +6,8 @@ import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography'; 
-import  Tooltip from '@mui/material/Tooltip'; 
+import Tooltip from '@mui/material/Tooltip';
+import Fab from '@mui/material/Fab';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
@@ -26,6 +27,7 @@ import '../assets/fontawesome-pro-5.15.1-web/css/all.css';
 import {useCustomSelector, useCustomDispatch}  from '../states/hook';
 import {showSearch,closeSearch} from '../states/searchBar';
 import {show} from '../states/filterDialog';
+import Collapse from '@mui/material/Collapse'
 const drawerWidth = 250;
 
 interface Props {
@@ -109,7 +111,7 @@ const Navigation = () => (
             <i className='fal fa-bookmark' />
             </Badge>
           </IconButton>
-          <IconButton color="inherit">
+          <IconButton component={Link} to='/notifications' color="inherit">
             <i className='fal fa-bell' />
           </IconButton>
           
@@ -151,34 +153,42 @@ const drawerContent = (
     ))}
   </List>
   )
-
+const StyledFab = styled(Fab)({
+  position: 'absolute',
+  zIndex: 1,
+  top: -30,
+  left: 0,
+  right: 0,
+  margin: '0 auto',
+  display:'none'
+});
 export default function SearchAppBar(props: Props) {
-  
+  //@ts-ignore
+   const user = JSON.parse(useCustomSelector( (state) => state.user.value));
+   const cartNumber = useCustomSelector((state) => state.cart.value);
   const searchBarState = useCustomSelector((state) => state.search.value);
-  
+  const [collapseSearch,setSearch] = React.useState<boolean>(false);
+  const [showFilter,setFilter] = React.useState<boolean>(false);
   const dispatch = useCustomDispatch();
   const { window } = props;
   type Toggle = true | false;
   const [state,setState] : any = React.useState(false);
   const toggleSearch = () =>{
-    if(searchBarState == 'none') return dispatch(showSearch());
-    if(searchBarState == 'block') return dispatch(closeSearch());
+    (collapseSearch === false)? setSearch(true):setSearch(false);
   }
   const [Dialog,setActive] = React.useState(<FilterDialog state={false}/>);
-  const showDialog = () => {
-    if (state) return setState(false);
-    setState(true);
+  const toggleFilter = () => {
+    (showFilter === false)? setFilter(true): setFilter(false);
   }
   const [mobileOpen, setMobileOpen] = React.useState(false);
-
+  
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
   const container = window !== undefined ? () => window().document.body : undefined;
   return (
     <Box sx={{ flexGrow: 1 }}>
-    <FilterDialog state={state} />
-      <AppBar position="static">
+      <AppBar position="static" >
         <Toolbar sx={{display:'flex',justifyContent:'space-between',flexDirection:{xs:'row'}}}>
           <Box ml={-1}>
           <IconButton
@@ -205,7 +215,27 @@ export default function SearchAppBar(props: Props) {
           </Box>
          
           
-          <Box sx={{display:'flex'}}>
+          <Box sx={{display:'flex',width:'60%',justifyContent:'space-around'}}>
+          
+          <IconButton sx={{display:{xs:'none',sm:'block'}}} component={Link} to='/' aria-label="open drawer">
+            <i className='fal fa-home-alt' />
+          </IconButton>
+          <IconButton sx={{display:{xs:'none',sm:'block'}}}  component={Link} to={'/cart'}>
+          <Badge badgeContent={cartNumber} color='error'>
+          <i className='fal fa-shopping-bag' />
+          </Badge>
+          </IconButton>
+          <StyledFab color="secondary" aria-label="add" >
+            
+          </StyledFab>
+          
+          <IconButton sx={{display:{xs:'none',sm:'block'}}}  component={Link} to='/test' color="inherit">
+          <Badge badgeContent={4} color='error' >
+            <i className='fal fa-bookmark' />
+            </Badge>
+          </IconButton>
+         
+         
             <Search sx={{backgroundColor:`rgba(100,100,102,0.1);`,borderRadius:0,display:{xs:'none',sm:'block'}}}>
             <SearchIconWrapper>
               <SearchIcon />
@@ -215,19 +245,24 @@ export default function SearchAppBar(props: Props) {
               inputProps={{ 'aria-label': 'search' }}
             />
           </Search>
-            <IconButton>
+            <IconButton sx={{display:{xs:'none',sm:'block'}}}  component={Link} to='/notifications' >
             
             <i className='fal fa-bell' />
             </IconButton>
-            <IconButton sx={{display:{xs:'none',sm:'inline'}}}>
-            
-            <i className='fal fa-user'  />
-            </IconButton>
+           
+             <IconButton sx={{display:{xs:'none',sm:'inline'}}} component={Link} to='/dashboard' color="inherit">
+            <i className='fal fa-user-circle' />
+          </IconButton>
           </Box>
+             <IconButton sx={{display:{xs:'inline',sm:'none'}}}  component={Link} to='/notifications' >
+            
+            <i className='fal fa-bell' />
+            </IconButton>
         </Toolbar>
-        <Toolbar sx={{padding:'10px',display:{xs:searchBarState,sm:'none'}}}>
-        <Box sx={{ml:2,display:{xs:'flex',sm:'none'},justifyContent:'space-between',width:'100%'}} >
-            <Search sx={{backgroundColor:'#f6f6f6'}}>
+       
+        <Collapse collapsedSize={0} in={collapseSearch} >
+            <Box sx={{display:'flex',py:2,justifyContent:'space-around',width:'90%'}}>
+            <Search sx={{backgroundColor:'#f6f6f6',width:'90%'}}>
             <SearchIconWrapper>
               <SearchIcon />
             </SearchIconWrapper>
@@ -235,15 +270,20 @@ export default function SearchAppBar(props: Props) {
               placeholder="Search…"
               inputProps={{ 'aria-label': 'search' }}
             />
+            
           </Search>
           <Tooltip title='Set Filter'>
               
-            <IconButton sx={{mr:1}} onClick={()=>dispatch(show())}>
+            <IconButton  onClick={toggleFilter}>
             <i className='fal fa-sliders-h' />
             </IconButton>
           </Tooltip>
           </Box>
-        </Toolbar>
+          <Collapse in={showFilter} >
+          Filters
+          </Collapse>
+          </Collapse>
+        
       </AppBar>
       <Box
         component="nav"
@@ -266,6 +306,7 @@ export default function SearchAppBar(props: Props) {
           }}
         >
           {drawerContent}
+          
         </Drawer>
         </Box>
     </Box>

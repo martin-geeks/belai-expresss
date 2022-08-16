@@ -8,6 +8,8 @@ import Typography from '@mui/material/Typography';
 import Tabs from '@mui/material/Tabs';
 import MuiTab from '@mui/material/Tab';
 import Skeleton from '@mui/material/Skeleton';
+import Fab from '@mui/material/Fab';
+import LinearProgress from '@mui/material/LinearProgress';
 import * as Colors from '@mui/material/colors';
 import {
   styled
@@ -24,11 +26,17 @@ import SwappleIphoneXSilver from '../assets/images/swappie-iphone-x-silver.png';
 import image from '../assets/images/clothing/image.jpg';
 import image2 from '../assets/images/clothing/image2.jpg';
 import image3 from '../assets/images/clothing/image3.jpg';
-import { useCustomDispatch } from '../states/hook';
-import {add,remove} from '../states/cartItems';
+import { useCustomDispatch,useCustomSelector } from '../states/hook';
+import {add,remove,addByProduct,removeByProduct} from '../states/cartItems';
 import  {Link, Navigate} from 'react-router-dom';
 import axios from 'axios';
-
+import {Swiper,SwiperSlide,useSwiper} from 'swiper/react';
+import {Grid as MyGrid,Keyboard,Lazy,Pagination,Navigation,EffectCreative} from 'swiper';
+import 'swiper/css';
+import 'swiper/css/effect-creative';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
+import 'swiper/css/scrollbar';
 
 const TabsTheme = createTheme({
   palette: {
@@ -123,7 +131,16 @@ interface Product {
     updatedAt: Date;
     addedDate: Date;
 }
-
+interface TypeTwoCategory {
+  technology: Product[];
+  clothing: Product[];
+  accessories: Product[];
+  food: Product;
+  misc: Product;
+}
+interface AllProduct {
+  category: TypeTwoCategory;
+}
 
 const GridProduct = styled(MuiGrid)(({theme}) =>({
   border:`0.5px solid ${Colors.grey[300]}`,
@@ -138,7 +155,7 @@ function Loading() {
   return (
     <Box sx={{width:'100%'}}>
       <Grid container spacing={2} >
-        {[1,2,3,4,5,7,8,9].map((n,i)=> (
+        {[1,2,3,4].map((n,i)=> (
         <Grid item xs={6} sm={3}  sx={{overflow:'scroll',maxHeight:{sm:400},mt:{sm:10}}} >
         <Skeleton variant='rectangular' animation='wave' height='150px' width='150px' sx={{borderRadius:'5px'}}>
         </Skeleton>
@@ -169,7 +186,7 @@ function Home() {
   const dispatch = useCustomDispatch();
   const [value,
     setValue] = React.useState(0);
-  const [products, setProducts]= React.useState<Product[]>([]);
+  const [products, setProducts]= React.useState<AllProduct>();
   const [loading,setLoading] = React.useState<boolean>(true);
   const [errorState,setError] = React.useState <boolean>(false);
   const [navigate,setNavigate] =  React.useState(false);
@@ -204,8 +221,9 @@ function Home() {
       .catch((err : Error )=> {
         alert(err)
       });*/
-      axios.get<Product[]>('/products')
+      axios.get<AllProduct>('/products')
       .then(response => {
+        //alert(JSON.stringify(response));
         setLoading(false);
         setProducts(response.data);
         setError(false);
@@ -224,6 +242,19 @@ function Home() {
       setNavigate(false);
     },100);*/
   }
+  const myCart = useCustomSelector((state) => state.cart.products);
+  const checkCart = (id: string) => {
+    
+    let cart = myCart.filter( product_id =>  product_id === id);
+    if(cart.length > 0) {
+     
+      return true;
+    } else {
+      
+      return false;
+    }
+    
+  }
   return (
     <React.Fragment>
     
@@ -232,15 +263,15 @@ function Home() {
         <Grid item xs={12} sm={3}>
         <ThemeProvider theme={TabsTheme}>
        
-        <Box>
-          <Tabs
+        <Box sx={{display:{xs:'block',sm:'none'}}}>
+   <Tabs
       value={value}
       onChange={handleChange}
       variant="scrollable"
       scrollButtons
       allowScrollButtonsMobile
-      aria-label="scrollable force tabs example"
-      sx={ { padding: '10px' }}
+      aria-label="Find what you are looking quickly"
+      sx={ { padding: '0px' }}
       >
   <Tab label="All" />
   <Tab label="Technology" />
@@ -248,26 +279,7 @@ function Home() {
   <Tab label="Food" />
   <Tab label="Household" />
     </Tabs>
-   
-          <Box sx={{display:{xs:'none',sm:'block'}}}>
-    <Typography
-              variant='h5'
-            >
-            Categories
-          </Typography>
-          <Box sx={{width:'100%',backgroundColor:'#f6f6f6', height:300,m:2,borderRadius:'10px',display:{xs:'block',sm:''}}}>
-            <CategoriesDesk />
-          </Box>
-          <Typography
-              variant='h5'
-            >
-            
-          </Typography>
-            <Box sx={{width:'100%',backgroundColor:'#f6f6f6', height:300,m:2,borderRadius:'10px',display:{xs:'none',sm:'none'}}}>
-            <CategoriesDesk />
-          </Box>
-          </Box>
-        </Box>
+  </Box>
         </ThemeProvider>
         </Grid>
         <Grid item xs={12} sm={12}>
@@ -278,69 +290,22 @@ function Home() {
             
     </Collapse>
     </ThemeProvider>
+    
       </Grid>
-         <Grid item xs={12} sm={9} sx={{overflow:'scroll',maxHeight:{sm:400},mt:{sm:10}}} >
-           <ThemeProvider theme={TabsTheme} >
-           <Box>
-            {navigate? <Navigate  to={'/product?product_id='+currentId} state={{product_id:currentId}} />: ''}
-            {loading? <Loading />: 
-            <Grid container spacing={2}>
-              {products.map((item,i)=>(
-             
-              <GridProduct item xs={6} sm={3} >
-                  <Box sx={{position:'',display:'flex',justifyContent:'space-between',width:'100%'}}>
-                  <Button size='small' disableElevation={true} disableFocusRipple={true} sx={{backgroundColor:Colors.blue[800],color:Colors.common.white,mb:1,fontSize:'7pt',borderRadius:0,'&:hover':{color:Colors.blue[800],boxShadow:'1px 1px 5px rgba(0,0,0,0.1)'}}}>20<i className='fal fa-percent' /></Button>
-                  <IconButton aria-label='Add to wishlist'>
-                    
-                    <i className='fal fa-bookmark'  />
-                    
-                  </IconButton>
-                  </Box>
-                  <CardMedia component='img' src={item.photos[0]} alt='Photo of an iPhone X'      width={'150px'}    height={'150px'}/>
-                  <Typography variant='body1'>
-                   <Typography sx={{color:Colors.blue[800],fontWeight:'bold',textAlign:'left' ,textTransform:'none'}}  onClick={()=> selectProduct(item.product_id)}>
-                    {item.name}
-                  </Typography>
-                  {handleRating(item.rating)}
-                    <Typography variant='subtitle1' sx={{display:'flex',color:Colors.yellow[900],fontWeight:'bold',justifyContent:'space-around'}}>
-                      {item.amount} <Typography sx={{fontWeight:'light',textDecoration:'line-through',color:Colors.grey[600],mt:1}}>{item.discount}</Typography>
-                    </Typography>
-                    <Typography variant='subtitle2' sx={{display:'inline'}}>
-                       <i className='fal fa-dash' />
-                       
-                    </Typography>
-                    
-                  </Typography>
-                  
-                  <Button
-                     disableFocusRipple
-                      disableElevation
-                     sx={{color:Colors.common.white,boxShadow:'none',borderRadius:'50%', height:'30px', width:'30px'}} 
-                     variant='contained' 
-                     onClick={()=>dispatch(add())}>+</Button>
-              </GridProduct>
-              ))}
-             
-              
-            </Grid>
-            }
-           </Box>
-           
-           </ThemeProvider>
-         </Grid>
-         <ThemeProvider theme={TabsTheme}>
-          <Grid item xs={12} sm={3}>
-        <ThemeProvider theme={TabsTheme}>
-       
-        <Box>
-          <Tabs
+         <Grid item xs={12} sm={3} sx={{display:{xs:'none',sm:'grid'}}} >
+         <ThemeProvider theme={TabsTheme} >
+         <Typography variant='h5'>
+          Category
+         </Typography>
+   <Tabs
       value={value}
       onChange={handleChange}
       variant="scrollable"
       scrollButtons
       allowScrollButtonsMobile
-      aria-label="scrollable force tabs example"
-      sx={ { padding: '10px',display:'none' }}
+      aria-label="Find what you are looking quickly"
+      orientation='vertical'
+      sx={ { padding: '0px' }}
       >
   <Tab label="All" />
   <Tab label="Technology" />
@@ -348,67 +313,137 @@ function Home() {
   <Tab label="Food" />
   <Tab label="Household" />
     </Tabs>
-    <Box sx={{p:1,backgroundColor:Colors.yellow[800],width:340,display:{xs:'flex',sm:'none'},justifyContent:'space-between'}}><Typography variant='h6' sx={{textAlign:'left',color:Colors.common.white}}><i className='fal fa-books' /> Stationary</Typography></Box>
-    
-          <Box sx={{display:{xs:'none',sm:'block'}}}>
-    <Typography
-              variant='h5'
-            >
-            More 
-          </Typography>
-          <Box sx={{width:'100%',backgroundColor:'#f6f6f6', height:300,m:2,borderRadius:'10px',display:{xs:'none',sm:'none'}}}>
-            <CategoriesDesk />
-          </Box>
+    </ThemeProvider>
           
-            <Box sx={{width:'100%',backgroundColor:'#f6f6f6', height:300,m:2,borderRadius:'10px',display:{xs:'block',sm:''}}}>
-            <CategoriesDesk />
-          </Box>
-          </Box>
-        </Box>
-        </ThemeProvider>
-        </Grid>
-        <Grid item xs={12} sm={9} sx={{overflow:'scroll',maxHeight:{sm:400},mt:{sm:10}}}>
-        <Box>
-           { loading? <Loading />:
+         </Grid>
+         <Grid item xs={12} sm={9} sx={{overflow:'scroll',maxHeight:{sm:400},mt:{sm:10}}} >
+           <Box>
+            {navigate? <Navigate  to={'/product?product_id='+currentId} state={{product_id:currentId}} />: ''}
+            {loading? <Loading />: 
             <Grid container spacing={2}>
-              {products.map((item,i)=>(
-              
-              <GridProduct item xs={6} sm={3} >
-                  <Box sx={{position:'',display:'flex',justifyContent:'space-between',width:'100%'}}>
-                  <Button size='small' disableElevation={true} disableFocusRipple={true} sx={{backgroundColor:Colors.blue[800],color:Colors.common.white,mb:1,fontSize:'7pt',borderRadius:0,'&:hover':{color:Colors.blue[800],boxShadow:'1px 1px 5px rgba(0,0,0,0.1)'}}}>20<i className='fal fa-percent' /></Button>
-                  <IconButton aria-label='Add to wishlist'>
+              <Button sx={{display:'flex',borderRadius:'0px',justifyContent:'space-between',mx:4}} endIcon={<i className='fal fa-arrow-right' />} fullWidth color='warning' >
+                Technology
+              </Button>
+                   <Swiper
+          slidesPerView={2}
+          space-between={30}
+          keyboard={{
+            enabled:true,
+          }}
+          grid={{
+            rows:2,
+           
+          }}
+          
+          lazy={true}
+          grabCursor={true}
+          navigation={false}
+          modules={[MyGrid,Lazy,Keyboard,Navigation,Pagination]}
+          
+          style={{padding:'10px 0'}}
+        >
                     
-                    <i className='fal fa-bookmark'  />
+        {/*@ts-ignore */}
+          {products.category.technology.map((p,i)=> (
+          <SwiperSlide style={{border:'1px solid #f0f0f0f0',borderRadius:'10px',padding:'0px',margin:'0px 10px'}}>
+          <div className='' >
+           
+             <Button  sx={{backgroundColor:Colors.red[600],borderRadius:'5px 5px 0px 0px',width:'100%','&:hover':{color:Colors.red[800],backgroundColor:Colors.common.white}}}>
+            {p.discount} <i className='fal fa-off' /> ~OFF
+            </Button>
+            <img src={SwappleIphoneXSilver} width='90%' height="200px"/>
+              <Typography textAlign={'left'}>
+              {p.name}
+            </Typography>
+            <Typography fontWeight={'bold'}  textAlign={'left'} >
+              {p.amount}
+            </Typography>
+            <Typography >
+              {handleRating(p.rating)}
+            </Typography>
+            <Box>
+            {checkCart(p.product_id)? <Fab onClick={() => dispatch(removeByProduct(p.product_id))}  sx={{boxShadow:'none'}} variant="circular" size='medium' color={'warning'}><i className='fad fa-minus' /></Fab>:<Fab sx={{boxShadow:'none'}} onClick={() => dispatch(addByProduct(p.product_id))}  variant="circular" size='medium' color={'warning'}><i className='fad fa-cart-plus' /></Fab>}
+            <Button color='warning'>
+              Add wishlist
+            </Button>
+            <Fab sx={{boxShadow:'none'}} onClick={() => selectProduct(p.product_id) } variant="circular" size='small' color={'warning'}>
+              <i className='fad fa-eye' />
+            </Fab>
+            </Box>
+          </div>
+          </SwiperSlide>
+        ))}
+        <Box sx={{width:'100%',backgroundColor:'blue',display:'block'}}>
+        
+     
+        
+        </Box>
+        </Swiper>
+        <Grid item xs={12} sx={{overflow:'scroll',maxHeight:{sm:400},mt:{sm:10}}}>
+         <Button sx={{display:'flex',borderRadius:'0px',justifyContent:'space-between'}} endIcon={<i className='fal fa-arrow-right' />} fullWidth color='warning' >
+                Clothing
+              </Button>
+                    <Swiper
+          slidesPerView={2}
+          space-between={30}
+          keyboard={{
+            enabled:true,
+          }}
+          grid={{
+            rows:2,
+           
+          }}
+          
+          lazy={true}
+          grabCursor={true}
+          navigation={false}
+          modules={[MyGrid,Lazy,Keyboard,Navigation,Pagination]}
+          
+          style={{padding:'10px 0'}}
+        >
                     
-                  </IconButton>
-                  </Box>
-                  <CardMedia component='img' src={item.photos[0]} alt='Photo of an iPhone X'  height={150}/>
-                  <Typography variant='body1'>
-                   <Typography sx={{color:Colors.blue[800],fontWeight:'bold',textAlign:'left'}} component={Link} to='/product'>
-                    {item.name}
-                  </Typography>
-                  {handleRating(item.rating)}
-                    <Typography variant='subtitle1' sx={{display:'flex',color:Colors.yellow[900],fontWeight:'bold',justifyContent:'space-around'}}>
-                      {item.amount} <Typography sx={{fontWeight:'light',textDecoration:'line-through',color:Colors.grey[600],mt:1}}>{item.discount}</Typography>
-                    </Typography>
-                    <Typography variant='subtitle2' sx={{display:'inline'}}>
-                       <i className='fal fa-dash' />
-                       
-                    </Typography>
-                    
-                  </Typography>
-                  
-                  <Button disableFocusRipple disableElevation sx={{color:Colors.common.white,boxShadow:'none',borderRadius:0}} variant='contained'>Add to Cart</Button>
-              </GridProduct>
-              ))}
-             
-              
-            </Grid>
-            }
-           </Box>
+        {/*@ts-ignore */}
+          {products.category.clothing.map((p,i)=> (
+          <SwiperSlide style={{border:'1px solid #f0f0f0f0',borderRadius:'5px',padding:'10px',margin:'0px 10px'}}>
+          <div className='' >
+           
+             <Button  sx={{backgroundColor:Colors.red[600],borderRadius:'0px',width:'90%'}}>
+            {p.discount} <i className='fal fa-off' /> ~OFF
+            </Button>
+            <img src={image2} width='90%' height="200px"/>
+              <Typography textAlign={'left'}>
+              {p.name}
+            </Typography>
+            <Typography fontWeight={'bold'}  textAlign={'left'} >
+              {p.amount}
+            </Typography>
+            <Typography >
+              {handleRating(p.rating)}
+            </Typography>
+             <Button variant='contained'  sx={{color:'#fff',borderRadius:'0px',boxShadow:'none', width:'90%',backgroundColor:Colors.yellow[800],py:1,fontSize:'15pt'}}>
+            <i className='fad fa-cart-plus' />
+            </Button>
+          </div>
+          </SwiperSlide>
+        ))}
+        <Box sx={{width:'100%',backgroundColor:'blue',display:'block'}}>
+        
+     
+        
+        </Box>
+        </Swiper>
         </Grid>
-         </ThemeProvider>
+            </Grid>
+            
+            }
+            
+           </Box>
+           
+         
+         </Grid>
+
       </Grid>
+      
     </React.Fragment>
   );
 }

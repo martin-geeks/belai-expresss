@@ -13,21 +13,11 @@ import {Link, Navigate} from 'react-router-dom';
 import {createTheme,ThemeProvider} from '@mui/material/styles';
 import * as Colors from '@mui/material/colors';
 import {setCookie,getCookie} from '../assets/js/cookies.js';
-import {useCustomDispatch} from '../states/hook';
+import {useCustomDispatch,useCustomSelector} from '../states/hook';
 import {addUser} from '../states/user';
-const theme = createTheme({
-  palette:{
-    primary:{
-      main:Colors.yellow[800]
-    },
-    text:{
-      primary:Colors.common.white,
-      secondary:Colors.common.black
-    }
-  }
-});
+import {main} from '../tools/theme';
 
-export default  function CompleteSetup() {
+function CompleteSetup() {
   const dispatch = useCustomDispatch();
   const [usernameFieldState,setUsernameFieldState] = React.useState(false);
   const [usernameStatus,setUsernameStatus] = React.useState('none');
@@ -94,16 +84,40 @@ export default  function CompleteSetup() {
    return uuid;
   }
   return (
-    <ThemeProvider theme={theme} >
+    <ThemeProvider theme={main} >
         <Box
-        >
+         sx={{background:'',my:{xs:10,sm:50},mx:{xs:0,sm:35}, py:{xs:0,sm:5},border:{xs:'',sm:'0px solid #b6b6b6'},boxShadow:{xs:'',sm:'2px 2px 15px rgba(217,217,200,0.9)'},borderRadius:'10px'}}>
         {loginState? <LinearProgress />: ''}
         <Collapse in={networkState} >
             <Alert color='error' icon={<i className='fal fa-globe' />} >Try again later as the network is bad</Alert> 
             </Collapse>
+            <Box sx={{py:5,width:'100%',backgroundColor:'primary.main'}}>
+            <Typography>
+            
+            </Typography>
+            <Typography variant='h4' sx={{color:'#fff',fontWeight:'bold'}}>
+              <i style={{position:'absolute',fontSize:'1em', display:'block'}} className='fab fa-cc-visa' />
+                   <i style={{fontSize:'1em', marginTop:'0px',marginRight:'0px',color:'white',transform:'rotate(70deg)'}}className='fad fa-headphones' />
+              <i className='fal fa-shopping-bag' style={{margin:'0px 20px'}} />
+              <p style={{display:'inline', fontSize:'2em'}} >
+              <svg xmlns="http://www.w3.org/2000/svg" width='400' height='30' viewBox="0 0 700 72" >
+                <text style={{fill:Colors.yellow[800],stroke:'#fff',strokeWidth: 2.5}} x="160" y="50">Belai Express</text>
+              </svg>
+              </p>
+              
+            </Typography>
+             <i style={{position:'absolute',fontSize:'1em', marginTop:'-80px',marginRight:'50px',color:'white',transform:'rotate(70deg)'}}className='fab fa-cc-paypal' />
+            <Typography variant='subtitle1' sx={{color:'#fff',fontWeight:'bold'}}>
+            <i style={{position:'absolute',fontSize:'2em',display:'block',transform:'rotate(45deg)'}}className='fad fa-shopping-cart' />
+              Buy Goods and Services
+            <i style={{position:'absolute',fontSize:'2em'}}className='fad fa-store' />
+              <i style={{position:'absolute',fontSize:'2em', marginTop:'-80px',marginRight:'50px',color:'white',transform:'rotate(70deg)'}}className='fab fa-google-pay' />
+                <i style={{position:'absolute',fontSize:'2em', marginTop:'-130px',marginRight:'2px',color:'white',transform:'rotate(70deg)'}}className='fad fa-tshirt' />
+            </Typography>
+            </Box>
           <Box component="form" onSubmit={handleSubmit} >
           <Grid container spacing={2} >
-          <Grid item xs={12} sm={6} >
+          <Grid item xs={12} sm={12} >
             <TextField
               margin="normal"
               required
@@ -113,6 +127,7 @@ export default  function CompleteSetup() {
               name="credential"
               autoComplete="username"
               autoFocus
+              size='small'
               error={usernameFieldState}
               sx={{width:'80%'}}
             />
@@ -121,7 +136,7 @@ export default  function CompleteSetup() {
             </Collapse>
              
           </Grid>
-           <Grid item xs={12} sm={6} >
+           <Grid item xs={12} sm={12} >
             <TextField
               margin="normal"
               required
@@ -130,7 +145,8 @@ export default  function CompleteSetup() {
               label="password"
               name="password"
               autoComplete="password"
-              autoFocus
+             
+              size='small'
               type='password'
               sx={{width:'80%'}}
               error={passwordFieldState}
@@ -140,7 +156,7 @@ export default  function CompleteSetup() {
             </Collapse>
             
           </Grid>
-          <Grid item xs={6} sm={12} sx={{position:'relative'}}>
+          <Grid item xs={12} sm={12} sx={{position:'relative'}}>
            <Box sx={{display:'none',position:{xs:'fixed',sm:'static'},top:'70%',left:'',width:'100%', backgroundColor:'blue',zIndex:'10%' }}>
             
             <Typography>
@@ -151,11 +167,11 @@ export default  function CompleteSetup() {
               type="submit"
               
               variant="contained"
-              sx={{margin: '0px auto'}}
+              sx={{width:'80%',my:1,boxShadow:'none',color:'#fff',textTransform:'none','&: hover':{boxShadow:'none'}}}
             >
               Sign In
             </Button>
-            <Button variant='text' component={Link} to='/sign-up' >
+            <Button sx={{width:'80%',my:1,border:'3px solid','&:hover':{border:'3px solid'},textTransform:'none'}} variant='outlined' component={Link} to='/sign-up' >
             Sign Up
             </Button>
            
@@ -167,4 +183,15 @@ export default  function CompleteSetup() {
       </ThemeProvider>
     
     );
+}
+export default function SignIn(){
+    //@ts-ignore
+    const user = JSON.parse(useCustomSelector( (state) => state.user.value));
+ if(user.userId){
+   return (<Navigate replace to='/'/>)
+ } else {
+    return (
+      <CompleteSetup />
+    );
+ }
 }
