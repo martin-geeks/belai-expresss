@@ -182,6 +182,112 @@ const theme2 = createTheme({
     }
   }
 });
+type PropsCategory = 'technology' | 'clothing' | 'food' | 'household' | 'misc';
+interface PropType {
+  heading: string;
+  products: AllProduct;
+  category: PropsCategory;
+}
+function ProductViewMobile(props: PropType) {
+    const [navigate,setNavigate] =  React.useState(false);
+    const [currentId,setCurrentId] = React.useState<string>('');
+    const dispatch = useCustomDispatch();
+    const handleRating = (rating: number) => {
+    let stars = []
+    for(let i=1; i<= rating; i++) {
+      stars.push(<Typography sx={{color:Colors.yellow[800],fontSize:'8pt'}}><i className='fas fa-star' /></Typography>);
+    }
+    let unstarred = 5 - rating;
+    for(let n=1; n<= unstarred; n++){
+      stars.push(<Typography sx={{fontSize:'8pt'}}><i className='fal fa-star' /></Typography>)
+    }
+    
+    return <Box sx={{display:'flex'}}>{stars}</Box>
+  }
+    const myCart = useCustomSelector((state) => state.cart.products);
+    const checkCart = (id: string) => {
+    
+    let cart = myCart.filter( product_id =>  product_id === id);
+    if(cart.length > 0) {
+     
+      return true;
+    } else {
+      
+      return false;
+    }
+    
+  }
+    const selectProduct = (product_id: string) => {
+    setNavigate(true);
+    setCurrentId(product_id);
+    /*setTimeout(function (){
+      setNavigate(false);
+    },100);*/
+  }
+  return (
+      <Box sx={{width:'100%'}}>
+       {navigate? <Navigate  to={'/product?product_id='+currentId} state={{product_id:currentId}} />: ''}
+              <Button sx={{display:'flex',borderRadius:'0px',justifyContent:'space-between',mx:4}} endIcon={<i className='fal fa-arrow-right' />} fullWidth color='warning' >
+                {props.heading}
+              </Button>
+                   <Swiper
+          slidesPerView={2}
+          space-between={30}
+          keyboard={{
+            enabled:true,
+          }}
+          grid={{
+            rows:2,
+           
+          }}
+          
+          lazy={true}
+          grabCursor={true}
+          navigation={false}
+          modules={[MyGrid,Lazy,Keyboard,Navigation,Pagination]}
+          
+          style={{padding:'10px 0'}}
+        >
+                    
+        {/*@ts-ignore */}
+          {props.products.category.technology.map((p,i)=> (
+          <SwiperSlide style={{border:'1px solid #f0f0f0f0',borderRadius:'10px',padding:'0px',margin:'0px 10px'}}>
+          <div className='' >
+           
+             <Button  sx={{backgroundColor:Colors.red[600],borderRadius:'5px 5px 0px 0px',width:'100%','&:hover':{color:Colors.red[800],backgroundColor:Colors.common.white}}}>
+            {p.discount} <i className='fal fa-off' /> ~OFF
+            </Button>
+            <img src={SwappleIphoneXSilver} width='90%' height="200px"/>
+              <Typography textAlign={'left'}>
+              {p.name}
+            </Typography>
+            <Typography fontWeight={'bold'}  textAlign={'left'} >
+              {p.amount}
+            </Typography>
+            <Typography >
+              {handleRating(p.rating)}
+            </Typography>
+            <Box>
+            {checkCart(p.product_id)? <Fab onClick={() => dispatch(removeByProduct(p.product_id))}  sx={{boxShadow:'none'}} variant="circular" size='medium' color={'warning'}><i className='fad fa-minus' /></Fab>:<Fab sx={{boxShadow:'none'}} onClick={() => dispatch(addByProduct(p.product_id))}  variant="circular" size='medium' color={'warning'}><i className='fad fa-cart-plus' /></Fab>}
+            <Button color='warning'>
+              Add wishlist
+            </Button>
+            <Fab sx={{boxShadow:'none'}} onClick={() => selectProduct(p.product_id) } variant="circular" size='small' color={'warning'}>
+              <i className='fad fa-eye' />
+            </Fab>
+            </Box>
+          </div>
+          </SwiperSlide>
+        ))}
+        <Box sx={{width:'100%',backgroundColor:'blue',display:'block'}}>
+        
+     
+        
+        </Box>
+        </Swiper>
+        </Box>
+    );
+}
 function Home() {
   const dispatch = useCustomDispatch();
   const [value,
@@ -318,122 +424,18 @@ function Home() {
          </Grid>
          <Grid item xs={12} sm={9} sx={{overflow:'scroll',maxHeight:{sm:400},mt:{sm:10}}} >
            <Box>
-            {navigate? <Navigate  to={'/product?product_id='+currentId} state={{product_id:currentId}} />: ''}
+         
             {loading? <Loading />: 
             <Grid container spacing={2}>
-              <Button sx={{display:'flex',borderRadius:'0px',justifyContent:'space-between',mx:4}} endIcon={<i className='fal fa-arrow-right' />} fullWidth color='warning' >
-                Technology
-              </Button>
-                   <Swiper
-          slidesPerView={2}
-          space-between={30}
-          keyboard={{
-            enabled:true,
-          }}
-          grid={{
-            rows:2,
-           
-          }}
-          
-          lazy={true}
-          grabCursor={true}
-          navigation={false}
-          modules={[MyGrid,Lazy,Keyboard,Navigation,Pagination]}
-          
-          style={{padding:'10px 0'}}
-        >
-                    
-        {/*@ts-ignore */}
-          {products.category.technology.map((p,i)=> (
-          <SwiperSlide style={{border:'1px solid #f0f0f0f0',borderRadius:'10px',padding:'0px',margin:'0px 10px'}}>
-          <div className='' >
-           
-             <Button  sx={{backgroundColor:Colors.red[600],borderRadius:'5px 5px 0px 0px',width:'100%','&:hover':{color:Colors.red[800],backgroundColor:Colors.common.white}}}>
-            {p.discount} <i className='fal fa-off' /> ~OFF
-            </Button>
-            <img src={SwappleIphoneXSilver} width='90%' height="200px"/>
-              <Typography textAlign={'left'}>
-              {p.name}
-            </Typography>
-            <Typography fontWeight={'bold'}  textAlign={'left'} >
-              {p.amount}
-            </Typography>
-            <Typography >
-              {handleRating(p.rating)}
-            </Typography>
-            <Box>
-            {checkCart(p.product_id)? <Fab onClick={() => dispatch(removeByProduct(p.product_id))}  sx={{boxShadow:'none'}} variant="circular" size='medium' color={'warning'}><i className='fad fa-minus' /></Fab>:<Fab sx={{boxShadow:'none'}} onClick={() => dispatch(addByProduct(p.product_id))}  variant="circular" size='medium' color={'warning'}><i className='fad fa-cart-plus' /></Fab>}
-            <Button color='warning'>
-              Add wishlist
-            </Button>
-            <Fab sx={{boxShadow:'none'}} onClick={() => selectProduct(p.product_id) } variant="circular" size='small' color={'warning'}>
-              <i className='fad fa-eye' />
-            </Fab>
-            </Box>
-          </div>
-          </SwiperSlide>
-        ))}
-        <Box sx={{width:'100%',backgroundColor:'blue',display:'block'}}>
-        
-     
-        
-        </Box>
-        </Swiper>
-        <Grid item xs={12} sx={{overflow:'scroll',maxHeight:{sm:400},mt:{sm:10}}}>
-         <Button sx={{display:'flex',borderRadius:'0px',justifyContent:'space-between'}} endIcon={<i className='fal fa-arrow-right' />} fullWidth color='warning' >
-                Clothing
-              </Button>
-                    <Swiper
-          slidesPerView={2}
-          space-between={30}
-          keyboard={{
-            enabled:true,
-          }}
-          grid={{
-            rows:2,
-           
-          }}
-          
-          lazy={true}
-          grabCursor={true}
-          navigation={false}
-          modules={[MyGrid,Lazy,Keyboard,Navigation,Pagination]}
-          
-          style={{padding:'10px 0'}}
-        >
-                    
-        {/*@ts-ignore */}
-          {products.category.clothing.map((p,i)=> (
-          <SwiperSlide style={{border:'1px solid #f0f0f0f0',borderRadius:'5px',padding:'10px',margin:'0px 10px'}}>
-          <div className='' >
-           
-             <Button  sx={{backgroundColor:Colors.red[600],borderRadius:'0px',width:'90%'}}>
-            {p.discount} <i className='fal fa-off' /> ~OFF
-            </Button>
-            <img src={image2} width='90%' height="200px"/>
-              <Typography textAlign={'left'}>
-              {p.name}
-            </Typography>
-            <Typography fontWeight={'bold'}  textAlign={'left'} >
-              {p.amount}
-            </Typography>
-            <Typography >
-              {handleRating(p.rating)}
-            </Typography>
-             <Button variant='contained'  sx={{color:'#fff',borderRadius:'0px',boxShadow:'none', width:'90%',backgroundColor:Colors.yellow[800],py:1,fontSize:'15pt'}}>
-            <i className='fad fa-cart-plus' />
-            </Button>
-          </div>
-          </SwiperSlide>
-        ))}
-        <Box sx={{width:'100%',backgroundColor:'blue',display:'block'}}>
-        
-     
-        
-        </Box>
-        </Swiper>
+             {/*@ts-ignore*/}
+          <ProductViewMobile heading={'Technology'} products={products}  category={'technology'} />
+          {/*@ts-ignore*/}
+         <ProductViewMobile heading={'Foods'} products={products}  category={'foods'} />
+          {/*@ts-ignore*/}
+         <ProductViewMobile heading={'Household'} category={'household'} products={products}  />
+          {/*@ts-ignore*/}
+          <ProductViewMobile heading={'Misc - Variety Items'} products={products}  category={'foods'} />
         </Grid>
-            </Grid>
             
             }
             

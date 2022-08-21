@@ -6,6 +6,7 @@
   "dependencies": {
     "@emotion/react": "^11.9.3",
     "@emotion/styled": "^11.9.3",
+    "@fingerprintjs/fingerprintjs-pro": "^3.7.1",
     "@mui/icons-material": "^5.8.4",
     "@mui/material": "^5.9.1",
     "@mui/styled-engine-sc": "^5.8.0",
