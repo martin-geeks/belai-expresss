@@ -47,7 +47,8 @@ export const cartItems = createSlice({
   name: 'cart',
   initialState: {
     value:0,
-    products: []
+    products: [],
+    amount:0,
   },
   reducers: {
     add: (state) => {
@@ -66,12 +67,14 @@ export const cartItems = createSlice({
           //@ts-ignore
           state.products.push(action.payload);
           state.value += 1;
-          
         }
       } else {
         //@ts-ignore
         state.products.push(action.payload);
+        state.products.forEach((product,index) =>{
+        });
         state.value +=1;
+        
       }
     },
     removeByProduct: (state,action) => {
@@ -85,9 +88,18 @@ export const cartItems = createSlice({
           
         }
       });
+    },
+    adjustAmount: (state,action) => {
+       if(state.amount === 0) {
+         let amount = parseInt(action.payload.split(' ')[1]);
+         state.amount = amount;
+       } else {
+            let amount = parseInt(action.payload.split(' ')[1]);
+         state.amount += amount;
+       }
     }
   }
 });
 
-export const {add, remove,addByProduct,removeByProduct} = cartItems.actions;
+export const {add, remove,addByProduct,removeByProduct,adjustAmount} = cartItems.actions;
 export default cartItems.reducer;

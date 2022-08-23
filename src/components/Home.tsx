@@ -2,7 +2,7 @@ import * as React from 'react';
 import Grid from '@mui/material/Grid';
 import MuiGrid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
-
+import TextField from '@mui/material/TextField';
 import MuiButton from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import Tabs from '@mui/material/Tabs';
@@ -20,6 +20,7 @@ import {
 } from '@mui/material/styles';
 import Alert from '@mui/material/Alert';
 import Collapse from '@mui/material/Collapse';
+import {main as mainTheme} from '../tools/theme';
 import CardMedia from '@mui/material/CardMedia';
 import IconButton from '@mui/material/IconButton';
 import SwappleIphoneXSilver from '../assets/images/swappie-iphone-x-silver.png';
@@ -27,7 +28,7 @@ import image from '../assets/images/clothing/image.jpg';
 import image2 from '../assets/images/clothing/image2.jpg';
 import image3 from '../assets/images/clothing/image3.jpg';
 import { useCustomDispatch,useCustomSelector } from '../states/hook';
-import {add,remove,addByProduct,removeByProduct} from '../states/cartItems';
+import {add,remove,addByProduct,removeByProduct,adjustAmount} from '../states/cartItems';
 import  {Link, Navigate} from 'react-router-dom';
 import axios from 'axios';
 import {Swiper,SwiperSlide,useSwiper} from 'swiper/react';
@@ -205,14 +206,14 @@ function ProductViewMobile(props: PropType) {
     return <Box sx={{display:'flex'}}>{stars}</Box>
   }
     const myCart = useCustomSelector((state) => state.cart.products);
-    const checkCart = (id: string) => {
+    const checkCart = (id: string,amount:string) => {
     
     let cart = myCart.filter( product_id =>  product_id === id);
     if(cart.length > 0) {
      
       return true;
     } else {
-      
+      dispatch(adjustAmount(amount));
       return false;
     }
     
@@ -251,7 +252,7 @@ function ProductViewMobile(props: PropType) {
                     
         {/*@ts-ignore */}
           {props.products.category.technology.map((p,i)=> (
-          <SwiperSlide style={{border:'1px solid #f0f0f0f0',borderRadius:'10px',padding:'0px',margin:'0px 10px'}}>
+          <SwiperSlide style={{border:'1px solid #f0f0f0f0',borderRadius:'10px',padding:'10px',margin:'0px 10px'}}>
           <div className='' >
            
              <Button  sx={{backgroundColor:Colors.red[600],borderRadius:'5px 5px 0px 0px',width:'100%','&:hover':{color:Colors.red[800],backgroundColor:Colors.common.white}}}>
@@ -268,7 +269,7 @@ function ProductViewMobile(props: PropType) {
               {handleRating(p.rating)}
             </Typography>
             <Box>
-            {checkCart(p.product_id)? <Fab onClick={() => dispatch(removeByProduct(p.product_id))}  sx={{boxShadow:'none'}} variant="circular" size='medium' color={'warning'}><i className='fad fa-minus' /></Fab>:<Fab sx={{boxShadow:'none'}} onClick={() => dispatch(addByProduct(p.product_id))}  variant="circular" size='medium' color={'warning'}><i className='fad fa-cart-plus' /></Fab>}
+            {checkCart(p.product_id,p.amount)? <Fab onClick={() => dispatch(removeByProduct(p.product_id))}  sx={{boxShadow:'none'}} variant="circular" size='medium' color={'warning'}><i className='fad fa-minus' /></Fab>:<Fab sx={{boxShadow:'none'}} onClick={() => dispatch(addByProduct(p.product_id))}  variant="circular" size='medium' color={'warning'}><i className='fad fa-cart-plus' /></Fab>}
             <Button color='warning'>
               Add wishlist
             </Button>
@@ -292,11 +293,13 @@ function Home() {
   const dispatch = useCustomDispatch();
   const [value,
     setValue] = React.useState(0);
+  const [categoryOrder,setCartegoryOrder]  = React.useState<string[]>(['Accessories','Clothing','Household','Food','misc']);
   const [products, setProducts]= React.useState<AllProduct>();
   const [loading,setLoading] = React.useState<boolean>(true);
   const [errorState,setError] = React.useState <boolean>(false);
   const [navigate,setNavigate] =  React.useState(false);
   const [currentId,setCurrentId] = React.useState<string>('');
+  const [layout,setLayout] = React.useState<any[]>([]);
   const handleChange = (event: React.SyntheticEvent, newValue: number) => {
     setValue(newValue);
   };
@@ -333,6 +336,7 @@ function Home() {
         setLoading(false);
         setProducts(response.data);
         setError(false);
+        
       })
       .catch(err => {
         setLoading(true);
@@ -341,7 +345,7 @@ function Home() {
        
       })
     },[refresh]);
-  const selectProduct = (product_id: string) => {
+  const selectProduct = (product_id: string,amount:string) => {
     setNavigate(true);
     setCurrentId(product_id);
     /*setTimeout(function (){
@@ -356,10 +360,41 @@ function Home() {
      
       return true;
     } else {
-      
+      //dispatch(adjustAmount(amount))
       return false;
     }
     
+  }
+  const renderOrdered = () =>{
+    let data = new Array();
+    axios.get('/api/arrangement')
+    .then((response:any)=>{
+      let resp = response.data;
+      let defaultOrder = ['Accessories','Clothing','Food','Misc']
+      if(resp.status) {
+        if(resp.arrangement.length > 0) setCartegoryOrder(resp.arrangement)
+        if(resp.arrangement === 0) setCartegoryOrder(defaultOrder);
+      } else {
+          setCartegoryOrder(defaultOrder);
+      }
+    })
+    .catch((err:Error) =>{
+      console.log(err);
+    });
+    categoryOrder.map((category,index)=>{
+      //@ts-ignore
+      for(let p in products.category ){
+        
+        
+        if(category === p) {
+          data.push(p);
+          setLayout(data);
+        } else {
+          //defaults to normal
+          //The category the  follows: Technology, Clothing,food etc
+        }
+      }
+    });
   }
   return (
     <React.Fragment>
@@ -422,11 +457,11 @@ function Home() {
     </ThemeProvider>
           
          </Grid>
-         <Grid item xs={12} sm={9} sx={{overflow:'scroll',maxHeight:{sm:400},mt:{sm:10}}} >
+         <Grid item xs={12} sm={9} sx={{overflow:'scroll',maxHeight:{sm:400}}} >
            <Box>
          
             {loading? <Loading />: 
-            <Grid container spacing={2}>
+            <Grid container spacing={2} sx={{mb:10}}>
              {/*@ts-ignore*/}
           <ProductViewMobile heading={'Technology'} products={products}  category={'technology'} />
           {/*@ts-ignore*/}
@@ -435,6 +470,52 @@ function Home() {
          <ProductViewMobile heading={'Household'} category={'household'} products={products}  />
           {/*@ts-ignore*/}
           <ProductViewMobile heading={'Misc - Variety Items'} products={products}  category={'foods'} />
+          <Grid item xs={12} sm={6} >
+          <ThemeProvider theme={mainTheme} >
+             <Box sx={{width:'100%',backgroundColor:'primary.main'}}>
+            <Typography>
+            
+            </Typography>
+            <Typography variant='h4' sx={{color:'#fff',fontWeight:'bold'}}>
+              <i style={{position:'absolute',fontSize:'1em', display:'block'}} className='fab fa-cc-visa' />
+                   <i style={{fontSize:'1em', marginTop:'0px',marginRight:'0px',color:'white',transform:'rotate(70deg)'}}className='fad fa-headphones' />
+              <i className='fal fa-shopping-bag' style={{margin:'0px 20px'}} />
+              <p style={{display:'inline', fontSize:'2em'}} >
+              <svg xmlns="http://www.w3.org/2000/svg" width='400' height='30' viewBox="0 0 700 72" >
+                <text style={{fill:Colors.yellow[800],stroke:'#fff',strokeWidth: 2.5}} x="160" y="50">Belai Express</text>
+              </svg>
+              </p>
+              
+            </Typography>
+             <i style={{position:'absolute',fontSize:'1em', marginTop:'-80px',marginRight:'50px',color:'white',transform:'rotate(70deg)'}}className='fab fa-cc-paypal' />
+            <Typography variant='subtitle1' sx={{color:'#fff',fontWeight:'bold'}}>
+            <i style={{position:'absolute',fontSize:'2em',display:'block',transform:'rotate(45deg)'}}className='fad fa-shopping-cart' />
+              Subscribe to our newsletter
+            <i style={{position:'absolute',fontSize:'2em'}}className='fad fa-store' />
+              <i style={{position:'absolute',fontSize:'2em', marginTop:'-80px',marginRight:'50px',color:'white',transform:'rotate(70deg)'}}className='fab fa-google-pay' />
+                <i style={{position:'absolute',fontSize:'2em', marginTop:'-130px',marginRight:'2px',color:'white',transform:'rotate(70deg)'}}className='fad fa-tshirt' />
+            </Typography>
+            <Box component='form' sx={{display:'flex',mx:1}} >
+                      <TextField
+              margin="normal"
+              required
+              variant='outlined'
+              id="email"
+              placeholder='Your email address'
+              name="email"
+              autoComplete="email"
+              
+              size='small'
+              error={false}
+              sx={{width:'80%',backgroundColor:'#fff',border:'none',borderRadius:'0px'}}
+            />
+            <Button sx={{color:'#fff'}}>
+            <i className='fal fa-arrow-right' />
+            </Button>
+            </Box>
+            </Box>
+          </ThemeProvider>
+          </Grid>
         </Grid>
             
             }

@@ -7,11 +7,14 @@ import MuiGrid from '@mui/material/Grid';
 import Tooltip from '@mui/material/Tooltip';
 import CardMedia from '@mui/material/CardMedia';
 import Typography from '@mui/material/Typography';
+import Fab from '@mui/material/Fab';
+import {Link} from 'react-router-dom';
 import * as Colors from '@mui/material/colors';
-import {styled, createTheme} from '@mui/material/styles';
+import {styled, createTheme,ThemeProvider} from '@mui/material/styles';
 import SwappleIphoneXSilver from '../assets/images/swappie-iphone-x-silver.png';
-
-
+import {main as mainTheme}  from '../tools/theme';
+import {useCustomDispatch, useCustomSelector} from '../states/hook';
+import {removeByProduct} from '../states/cartItems';
 
 const IconButton = styled(MuiIconButton)(({theme}) => ({
   borderRadius:0,
@@ -29,7 +32,6 @@ const IconMobileButton = styled(MuiIconButton)(({theme}) => ({
 
 const BoxModified = styled(MuiBox)(({theme}) =>({
   backgroundColor:'',
-  boxShadow:`2px 2px 15px rgba(0,0,0,0.2)`,
   borderRadius:'5px',
   padding:5,
 
@@ -57,7 +59,7 @@ interface Product {
 }
 const product: Product = {
   name: 'iPhone X Silver',
-  amount: 'ZMW 999.50',
+  amount: '999.50',
   rating: 3,
   photo: SwappleIphoneXSilver,
   model: 'X series',
@@ -94,74 +96,76 @@ const handleRating = (rating: number) => {
     }
     return <Box sx={{display:'flex'}}>{stars}</Box>
   }
+var cost = 0;
 
-  
+
 export default function Cart(){
-  const [totalAmount,updateAmount] = React.useState(100);
-  
-  const calculateTotalCost = () => {
-  alert(1)
-    if(products.length > 0) {
-      for(let i=0; i<products.length; i++){
-        let total = eval(`${totalAmount}+${products[i]['amount']}`);
-        updateAmount(total);
-      }
-    }
-    alert(totalAmount);
+  const storedAmount = useCustomSelector((state) => state.cart.amount);
+  const [totalAmount,setAmount] = React.useState<string>("5000");
+  const [paper,setPaper] = React.useState(0)
+  var pop = '0';
+  const calculateTotalCost = (amount: string) => {
+    //let data = Number(amount);
+    let myAmount = eval(`${pop}+${amount}`) ;
+    ////Amount('9000');
+    pop = myAmount;
+    return <Box>{pop}</Box>
   }
+  const myCart = useCustomSelector((state) => state.cart.products);
+  if(myCart.length > 0) {
   return (
     <React.Fragment>
       <Box>
       <Grid container >
       <Grid item xs={12} sm={4} sx={{border:' ', height:{xs:'',sm:'70vh'}}}>
-      <Typography variant='h5'>
-      Operations
+      <Typography variant='h5' sx={{fontWeight:'bold',textAlign:'left'}}>
+      My Cart List
       </Typography>
+      
       <BoxModified sx={{backgroundColor:'', display:{xs:'flex',sm:''},flexDirection:{xs:'row',sm:'column'},justifyContent:'space-around'}} >
+      <ThemeProvider theme={mainTheme} >
       <Tooltip title='See my saved Cart' >
-      <IconButton startIcon={<i className='fal fa-shopping-cart' />} sx={{color:Colors.yellow[800]}}>
-      <Typography sx={{display:{xs:'none',sm:'inline'}}} >My Saved Cart</Typography>
+      <IconButton variant='contained' size='large' startIcon={<i className='fal fa-shopping-cart' />} sx={{borderRadius:'10px',color:'white',boxShadow:'none'}}>
+      <Typography sx={{display:{sm:'inline',fontWeight:'bold'}}} >Proceed to payment</Typography>
       </IconButton>
       </Tooltip>
-      <Tooltip title='Save to Cloud' >
-      <IconButton startIcon={<i className='fal fa-save' />} sx={{color:Colors.blue[300]}}>
-      <Typography sx={{display:{xs:'none',sm:'inline'}}} >Save to cloud</Typography>
-      </IconButton>
-      </Tooltip>
-      <Tooltip title='Clear Cart'>
-      <IconButton startIcon={<i className='fal fa-trash' />} sx={{color:Colors.red[300]}}>
-      <Typography sx={{display:{xs:'none',sm:'inline'}}} >Clear Cart</Typography>
-      </IconButton>
-      </Tooltip>
+      
+      
+     
       <Tooltip title='view as list' >
-      <IconButton startIcon={  <i className='fal fa-list' />} sx={{color:Colors.teal[900]}}>
-    
-       <Typography sx={{display:{xs:'none',sm:'inline'}}} >View as list</Typography>
-      </IconButton>
+        <Fab sx={{boxShadow:'none',color:'white'}} variant="circular" size='small' color={'primary'}>
+              <i className='fad fa-list' />
+        </Fab>
       </Tooltip>
        <Tooltip title='My History' >
-      <IconButton startIcon={  <i className='fal fa-history' />} sx={{color:Colors.indigo[800]}}>
-    
+           <Fab sx={{boxShadow:'none',color:'white'}} variant="circular" size='small' color={'primary'}>
+              <i className='fad fa-history' />
+        
+      
        <Typography sx={{display:{xs:'none',sm:'inline'}}} >Shopping History</Typography>
-      </IconButton>
+      </Fab>
       </Tooltip>
-     
+     </ThemeProvider>
+   
       </BoxModified>
+        <Typography variant='body1' sx={{my:2,mx:2,textAlign:'center'}}>
+      <i className='fad fa-info-circle' style={{color:Colors.red[600]}}/> We advise you to recheck the list of items you clicked for buying before making your payment
+     </Typography>
       </Grid>
       <Grid item container xs={12} sm={8} sx={{height:{xs:'',sm:'70vh'}}} >
         
       
       <Box sx={{width:'100%',display:'flex',justifyContent:'space-around',my:2}}>
-        <Typography variant='h6'>
-          Make Payment:
+        <Typography >
+          Total Amount
         </Typography>
-        <Typography sx={{color:Colors.common.black,fontWeight:'bold',fontSize:'15pt'}}>
-          {totalAmount}
+        <Typography>
+        <i className='fal fa-arrow-right' />
         </Typography>
-        <IconButton sx={{color:Colors.common.white,backgroundColor:Colors.yellow[800]}} onClick={calculateTotalCost}>
-          <i className='fal fa-visa' />
-          Pay
-        </IconButton>
+        <Typography sx={{color:Colors.blue[600],fontWeight:'bold',fontSize:'15pt'}}>
+          K{storedAmount}
+        </Typography>
+      
         
       </Box>
         
@@ -183,12 +187,12 @@ export default function Cart(){
                        <i className='fal fa-dash' />
                        
                     </Typography>
-                    
+                  { calculateTotalCost(product.amount)}
                   </Typography>
                   <Tooltip title='Clear Cart'>
       <IconButton startIcon={<i className='fal fa-trash' />} sx={{color:Colors.red[300]}}>
       <Typography sx={{display:{xs:'none',sm:'inline'}}} >Clear Cart 
-      
+        
       </Typography>
       </IconButton>
       </Tooltip>
@@ -201,4 +205,69 @@ export default function Cart(){
       </Box>
     </React.Fragment>
     )
+  } else {
+    return (
+      <React.Fragment>
+        <Box>
+            <Typography variant='h5' sx={{fontWeight:'bold',textAlign:'left'}}>
+      My Cart List
+      </Typography>
+      
+      <BoxModified sx={{backgroundColor:'', display:{xs:'flex',sm:''},flexDirection:{xs:'row',sm:'column'},justifyContent:'space-around'}} >
+      <ThemeProvider theme={mainTheme} >
+      <Tooltip title='See my saved Cart' >
+      <IconButton variant='contained' size='large' startIcon={<i className='fal fa-shopping-cart' />} sx={{borderRadius:'10px',color:'white',boxShadow:'none'}}>
+      <Typography sx={{display:{sm:'inline',fontWeight:'bold'}}} >Proceed to payment</Typography>
+      </IconButton>
+      </Tooltip>
+      
+      
+     
+      <Tooltip title='view as list' >
+        <Fab sx={{boxShadow:'none',color:'white'}} variant="circular" size='small' color={'primary'}>
+              <i className='fad fa-list' />
+        </Fab>
+      </Tooltip>
+       <Tooltip title='My History' >
+           <Fab sx={{boxShadow:'none',color:'white'}} variant="circular" size='small' color={'primary'}>
+              <i className='fad fa-history' />
+        
+      
+       <Typography sx={{display:{xs:'none',sm:'inline'}}} >Shopping History</Typography>
+      </Fab>
+      </Tooltip>
+     </ThemeProvider>
+   
+      </BoxModified>
+             <Box sx={{width:'100%',display:'flex',justifyContent:'space-around',my:2}}>
+        <Typography >
+          Total Amount
+        </Typography>
+        <Typography>
+        <i className='fal fa-arrow-right' />
+        </Typography>
+        <Typography sx={{color:Colors.blue[600],fontWeight:'bold',fontSize:'15pt'}}>
+          K{storedAmount}
+        </Typography>
+
+      </Box>
+      <ThemeProvider theme={mainTheme}>
+            <Typography sx={{my:20,color:'#b6b6b6',textAlign:'center'}}>
+           
+             <i className='fal fa-shopping-basket' style={{fontSize:'3em'}} />
+    <Typography> There is nothing in the cart at the moment</Typography>
+     <Tooltip title='My History' >
+           <Fab sx={{boxShadow:'none',color:'white',my:2}} variant="circular" size='large' color={'primary'} component={Link} to='/' >
+              <i className='fad fa-cart-plus' />
+        
+      
+       <Typography sx={{display:{xs:'none',sm:'inline'}}} >Shopping History</Typography>
+      </Fab>
+      </Tooltip>
+      </Typography>
+        </ThemeProvider>
+        </Box>
+      </React.Fragment>
+      )
+  }
 }

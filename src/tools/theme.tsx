@@ -8,6 +8,7 @@ export const main = createTheme({
     text :{
       primary:Colors.common.black,
       secondary: Colors.grey[500],
+      
     },
     error:{
       main:Colors.red[800]
