@@ -28,9 +28,10 @@ import image from '../assets/images/clothing/image.jpg';
 import image2 from '../assets/images/clothing/image2.jpg';
 import image3 from '../assets/images/clothing/image3.jpg';
 import { useCustomDispatch,useCustomSelector } from '../states/hook';
-import {add,remove,addByProduct,removeByProduct,adjustAmount} from '../states/cartItems';
+import {add,remove,addProducts,addByProduct,removeByProduct,adjustAmount} from '../states/cartItems';
 import  {Link, Navigate} from 'react-router-dom';
 import axios from 'axios';
+import {getCookie} from '../assets/js/cookies.js'
 import {Swiper,SwiperSlide,useSwiper} from 'swiper/react';
 import {Grid as MyGrid,Keyboard,Lazy,Pagination,Navigation,EffectCreative} from 'swiper';
 import 'swiper/css';
@@ -101,13 +102,13 @@ interface Category {
   category: TypeCategory;
   subcategory: TypeSubCategory;
 }
-interface Shipping {
+export interface Shipping {
   cost: number;
   location: string;
   time: string;
 }
 
-interface Product {
+export interface Product {
     name: string;
     amount: string;
     rating: number;
@@ -132,7 +133,7 @@ interface Product {
     updatedAt: Date;
     addedDate: Date;
 }
-interface TypeTwoCategory {
+export interface TypeTwoCategory {
   technology: Product[];
   clothing: Product[];
   accessories: Product[];
@@ -208,12 +209,13 @@ function ProductViewMobile(props: PropType) {
     const myCart = useCustomSelector((state) => state.cart.products);
     const checkCart = (id: string,amount:string) => {
     
-    let cart = myCart.filter( product_id =>  product_id === id);
+    let cart = myCart.filter( product =>  product.productId === id);
     if(cart.length > 0) {
      
       return true;
     } else {
-      dispatch(adjustAmount(amount));
+      
+      dispatch(adjustAmount({hi:'man'}));
       return false;
     }
     
@@ -290,6 +292,8 @@ function ProductViewMobile(props: PropType) {
     );
 }
 function Home() {
+  //@ts-ignore
+  const user = JSON.parse(getCookie('belaiExpress'));
   const dispatch = useCustomDispatch();
   const [value,
     setValue] = React.useState(0);
@@ -344,7 +348,9 @@ function Home() {
         setResponseMessage('Could\'nt connect to the server.');
        
       })
+   
     },[refresh]);
+  
   const selectProduct = (product_id: string,amount:string) => {
     setNavigate(true);
     setCurrentId(product_id);
@@ -355,7 +361,7 @@ function Home() {
   const myCart = useCustomSelector((state) => state.cart.products);
   const checkCart = (id: string) => {
     
-    let cart = myCart.filter( product_id =>  product_id === id);
+    let cart = myCart.filter( product =>  product.productId === id);
     if(cart.length > 0) {
      
       return true;

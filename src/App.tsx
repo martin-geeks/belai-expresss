@@ -21,7 +21,8 @@ import * as Colors from '@mui/material/colors';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { Routes as Switch, Route} from 'react-router-dom';
 import {useCustomDispatch,useCustomSelector} from './states/hook';
-
+import {getCookie} from './assets/js/cookies.js'
+import axios from 'axios';
 declare module '@mui/material/styles' {
   interface Theme {
     status: {
@@ -66,6 +67,7 @@ const theme = createTheme({
 
 function App() {
    const token = useCustomSelector((state) => state.user.value);
+
   
   return (
     <div className="App">
